@@ -1,4 +1,5 @@
-FROM alpine 
+FROM resin/rpi-alpine
+RUN [ "cross-build-start" ]
 RUN apk add --no-cache python3
 RUN apk add --no-cache --virtual build \
         git && \
@@ -9,5 +10,6 @@ RUN apk add --no-cache --virtual build \
     rm -rf /teslajson  &&\
     apk del build
 RUN pip3 --disable-pip-version-check --no-cache-dir install geopy 
+RUN [ "cross-build-end" ]
 ADD query.py ./query.py
 CMD ["python3","-u","./query.py"]
