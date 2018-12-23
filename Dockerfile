@@ -9,7 +9,7 @@ RUN apk add --no-cache --virtual build \
     cd / && \
     rm -rf /teslajson  &&\
     apk del build
-RUN pip3 --disable-pip-version-check --no-cache-dir install geopy 
+RUN pip3 --disable-pip-version-check --no-cache-dir install geopy requests
 RUN [ "cross-build-end" ]
 ADD query.py ./query.py
 CMD ["python3","-u","./query.py"]
