@@ -8,19 +8,8 @@ import pprint
 import json
 import requests
 from geopy.distance import geodesic
-try:
-  home = open('/var/run/secrets/home', 'r').read().strip()
-  username = open('/var/run/secrets/email', 'r').read().strip()
-  password = open('/var/run/secrets/passworda', 'r').read().strip()
-except: #Todo come up with better defaults.
-  home = None
-  username = None
-  password = None
 
-try:
-  minimumRange = open('/var/run/secrets/minrange', 'r').read().strip()
-except:
-  minimumRange = 100
+
 
 maxDistanceFt = 100
 getStateIntervalDefault = 3600
@@ -93,6 +82,33 @@ def getState(vehicle):
   return state
 
 state = initializeState()
+
+try:
+  home = open('/var/run/secrets/home', 'r').read().strip()
+  pdebug('note: home = ' + home)
+except:
+  home = '37.4919392,-121.9469367'
+  pdebug('warning: home = ' + home)
+
+try:
+  username = open('/var/run/secrets/email', 'r').read().strip()
+  pdebug('note: username = ' + username)
+except:
+  pdebug('warning: username = None')
+  username = None
+
+try:
+  password = open('/var/run/secrets/password', 'r').read().strip()
+  pdebug('note: password = [redacted]')
+except:
+  pdebug('warning: password = None')
+  password = None
+
+try:
+  minimumRange = open('/var/run/secrets/minrange', 'r').read().strip()
+except:
+  minimumRange = 100
+  pdebug('defaulting: minimumRange = ' + str(minimumRange))
 
 # Todo: soft check every 15 minutes if car is online, then get state.
 
