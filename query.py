@@ -7,9 +7,10 @@ import datetime
 import pprint
 import json
 import requests
+import urllib3
 from geopy.distance import geodesic
 
-
+urllib3.disable_warnings()
 
 maxDistanceFt = 100
 getStateIntervalDefault = 3600
@@ -136,7 +137,9 @@ while True:
           getStateInterval = getStateIntervalActive
           lumenPUT('{"animation":"rainbow"')
         else:
-          getStateInterval = getStateIntervalOnline 
+          getStateInterval = getStateIntervalOnline
+      dataPUT = requests.put('https://config:8443/badger/'+datetime.datetime.now().isoformat(), data=json.dumps(state), verify=False)
+      pdebug("response code: " + str(dataPUT.status_code))
     else:
       pdebug('login failed, sleeping for a while')
       for i in range(loginfailloop):
