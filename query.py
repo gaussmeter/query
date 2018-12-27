@@ -132,10 +132,10 @@ while True:
           lumenPUT('{"animation":"fill","r":255,"g":255}')
         elif state['vehicle_state']['isHome'] == False:
           pdebug('Car is not at home')
-          lumenPUT('{"animation":"rainbow"')
+          lumenPUT('{"animation":"rainbow"}')
         elif state['drive_state']['shift_state'] != None:
           getStateInterval = getStateIntervalActive
-          lumenPUT('{"animation":"rainbow"')
+          lumenPUT('{"animation":"rainbow"}')
         else:
           getStateInterval = getStateIntervalOnline
       dataPUT = requests.put('https://config:8443/badger/'+datetime.datetime.now().isoformat(), data=json.dumps(state), verify=False)
