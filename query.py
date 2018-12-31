@@ -40,8 +40,11 @@ def initializeState():
   return state
 
 def lumenPUT(data):
-  lumenPUT = requests.put('http://lumen:9000/lumen', data=data)
-  pdebug('response code: ' + str(lumenPUT.status_code) + ', response json: ' + lumenPUT.text )
+  try:
+    lumenPUT = requests.put('http://lumen:9000/lumen', data=data)
+    pdebug('response code: ' + str(lumenPUT.status_code) + ', response json: ' + lumenPUT.text )
+  except:
+    pdebug("failed to PUT animation to lumen")
 
 
 def getVehicle():
@@ -138,8 +141,14 @@ while True:
           lumenPUT('{"animation":"rainbow"}')
         else:
           getStateInterval = getStateIntervalOnline
-      dataPUT = requests.put('https://config:8443/badger/'+datetime.datetime.now().isoformat(), data=json.dumps(state), verify=False)
-      pdebug("response code: " + str(dataPUT.status_code))
+      currentStateKey = datetime.datetime.now().isoformat()
+      try:
+        dataPUT = requests.put('https://config:8443/badger/'+currentStateKey, data=json.dumps(state), verify=False)
+        pdebug("PUT currentState response code: " + str(dataPUT.status_code))
+        dataPUT = requests.put('https://config:8443/badger/currentStateKey',currentStateKey,verify=False)
+        pdebug("PUT currentStateKey response code: " + str(dataPUT.status_code))
+      except:
+        pdebug("failed to PUT currentState and currentStateKey")
     else:
       pdebug('login failed, sleeping for a while')
       for i in range(loginfailloop):
