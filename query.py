@@ -8,6 +8,7 @@ import pprint
 import json
 import requests
 import urllib3
+import os
 from geopy.distance import geodesic
 
 urllib3.disable_warnings()
@@ -21,6 +22,7 @@ getStateIntervalOnline = 1200
 getStateIntervalOnline = getStateIntervalDefault
 loginfailloop = 90
 debugEnabled = True
+
 
 def signal_handler(sig, frame):
   pdebug('You pressed Ctrl+C!')
@@ -41,10 +43,17 @@ def initializeState():
 
 def lumenPUT(data):
   try:
-    lumenPUT = requests.put('http://lumen:9000/lumen', data=data)
+    lumenPUT = requests.put('http://'+lumen+':9000/lumen', data=data)
     pdebug('response code: ' + str(lumenPUT.status_code) + ', response json: ' + lumenPUT.text )
   except:
     pdebug("failed to PUT animation to lumen")
+
+def configGET(key):
+  try:
+    response = requests.get('https://'+config+':8443/badger/'+key, verify=False)
+    return response.text
+  except:
+    return ""
 
 
 def getVehicle():
@@ -52,7 +61,7 @@ def getVehicle():
   try:
     connection = teslajson.Connection(username, password, tesla_client='{"v1": {"id": "e4a9949fcfa04068f59abb5a658f2bac0a3428e4652315490b659d5ab3f35a9e", "secret": "c75f14bbadc8bee3a7594412c31416f8300256d7668ea7e6e7f06727bfb9d220", "baseurl": "https://owner-api.teslamotors.com", "api": "/api/1/"}}')
     return connection.vehicles[0]
-  except: 
+  except:
     return {'state' : 'failed'}
 
 def getState(vehicle):
@@ -77,29 +86,59 @@ def getState(vehicle):
     return state
   state['vehicle_state'] = {}
   state['vehicle_state']['distanceFromHome'] =  geodesic((state['drive_state']['latitude'],state['drive_state']['longitude']),home).ft 
-  if state['vehicle_state']['distanceFromHome'] < maxDistanceFt:
+  if int(state['vehicle_state']['distanceFromHome']) < int(maxDistanceFt):
     state['vehicle_state']['isHome'] = True
   else:
-    state['vehicle_state']['isHome'] = False 
+    state['vehicle_state']['isHome'] = False
+  if int(state['charge_state']['ideal_battery_range']) >= int(chargedRange)-10:
+    state['vehicle_state']['isCharged'] = True
+  else:
+    state['vehicle_state']['isCharged'] = False
+  if int(state['charge_state']['ideal_battery_range']) <= int(shouldChargeRange):
+    state['vehicle_state']['shouldCharge'] = True
+  else:
+    state['vehicle_state']['shouldCharge'] = False
+  if int(state['charge_state']['ideal_battery_range']) <= int(lowRange):
+    state['vehicle_state']['isLow'] = True
+  else:
+    state['vehicle_state']['isLow'] = False
   state['data_state']['timestamp'] = int(time.time())
-  state['data_state']['isGood'] = True 
+  state['data_state']['isGood'] = True
   return state
 
 state = initializeState()
+
+if os.environ.get('LUMEN') != None:
+  lumen = os.environ.get('LUMEN')
+else:
+  lumen = 'lumen'
+if os.environ.get('CONFIG') != None:
+  config = os.environ.get('CONFIG')
+else:
+  config = 'config'
+
+pdebug('lumen server: ' + lumen)
+pdebug('config server: ' + config)
 
 try:
   home = open('/var/run/secrets/home', 'r').read().strip()
   pdebug('note: home = ' + home)
 except:
-  home = '37.4919392,-121.9469367'
-  pdebug('warning: home = ' + home)
+  home = configGET('GaussHome')
+  pdebug('from configGET: home = ' + home)
+  if home == "":
+    home = '37.4919392,-121.9469367'
+    pdebug('warning: home = ' + home)
 
 try:
   username = open('/var/run/secrets/email', 'r').read().strip()
   pdebug('note: username = ' + username)
 except:
-  pdebug('warning: username = None')
-  username = None
+  username = configGET('GaussUserName')
+  pdebug('from configGet: username = ' + username)
+  if home == "":
+    pdebug('warning: username = None')
+    username = None
 
 try:
   password = open('/var/run/secrets/password', 'r').read().strip()
@@ -110,11 +149,19 @@ except:
 
 try:
   minimumRange = open('/var/run/secrets/minrange', 'r').read().strip()
+  pdebug('note: minimumRange = ' + str(minimumRange))
 except:
-  minimumRange = 100
-  pdebug('defaulting: minimumRange = ' + str(minimumRange))
+  minimumRange = configGET('homeMaxDistFt')
+  pdebug('from configGet: minimumRange = ' + str(minimumRange))
+  if minimumRange == "":
+    minimumRange = 100
+    pdebug('defaulting: minimumRange = ' + str(minimumRange))
 
 # Todo: soft check every 15 minutes if car is online, then get state.
+
+chargedRange = configGET('chargedRange')
+shouldChargeRange = configGET('shouldChargeRange')
+lowRange = configGET('lowRange')
 
 while True:
   if int(time.time()) - int(state['data_state']['timestamp'])  > getStateInterval:
@@ -127,7 +174,7 @@ while True:
         if state['vehicle_state']['isHome'] == True and state['charge_state']['charging_state'] != 'Disconnected':
           pdebug('Car is home and plugged in!')
           lumenPUT('{"animation":"fill","g":255}')
-        elif state['vehicle_state']['isHome'] == True and state['charge_state']['charging_state'] == 'Disconnected' and state['charge_state']['battery_range'] < minimumRange:
+        elif state['vehicle_state']['isHome'] == True and state['charge_state']['charging_state'] == 'Disconnected' and int(state['charge_state']['battery_range']) < int(minimumRange):
           pdebug('car is home, not plugged in and below ' + minimumRange + ' miles range')
           lumenPUT('{"animation":"fill","r":255}')
         elif state['vehicle_state']['isHome'] == True and state['charge_state']['charging_state'] == 'Disconnected':
@@ -143,9 +190,9 @@ while True:
           getStateInterval = getStateIntervalOnline
       currentStateKey = datetime.datetime.now().isoformat()
       try:
-        dataPUT = requests.put('https://config:8443/badger/'+currentStateKey, data=json.dumps(state), verify=False)
+        dataPUT = requests.put('https://'+config+':8443/badger/'+currentStateKey, data=json.dumps(state), verify=False)
         pdebug("PUT currentState response code: " + str(dataPUT.status_code))
-        dataPUT = requests.put('https://config:8443/badger/currentStateKey',currentStateKey,verify=False)
+        dataPUT = requests.put('https://'+config+':8443/badger/currentStateKey',currentStateKey,verify=False)
         pdebug("PUT currentStateKey response code: " + str(dataPUT.status_code))
       except:
         pdebug("failed to PUT currentState and currentStateKey")
