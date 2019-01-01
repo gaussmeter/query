@@ -13,7 +13,6 @@ from geopy.distance import geodesic
 
 urllib3.disable_warnings()
 
-maxDistanceFt = 100
 getStateIntervalDefault = 3600
 getStateInterval = getStateIntervalDefault
 getStateIntervalActive = 5 
@@ -59,7 +58,7 @@ def configGET(key):
 def getVehicle():
   pdebug('start getVehicle')
   try:
-    connection = teslajson.Connection(username, password, tesla_client='{"v1": {"id": "e4a9949fcfa04068f59abb5a658f2bac0a3428e4652315490b659d5ab3f35a9e", "secret": "c75f14bbadc8bee3a7594412c31416f8300256d7668ea7e6e7f06727bfb9d220", "baseurl": "https://owner-api.teslamotors.com", "api": "/api/1/"}}')
+    connection = teslajson.Connection(tEmailAdr, tPassword, tesla_client='{"v1": {"id": "e4a9949fcfa04068f59abb5a658f2bac0a3428e4652315490b659d5ab3f35a9e", "secret": "c75f14bbadc8bee3a7594412c31416f8300256d7668ea7e6e7f06727bfb9d220", "baseurl": "https://owner-api.teslamotors.com", "api": "/api/1/"}}')
     return connection.vehicles[0]
   except:
     return {'state' : 'failed'}
@@ -85,20 +84,20 @@ def getState(vehicle):
   except:
     return state
   state['vehicle_state'] = {}
-  state['vehicle_state']['distanceFromHome'] =  geodesic((state['drive_state']['latitude'],state['drive_state']['longitude']),home).ft 
-  if int(state['vehicle_state']['distanceFromHome']) < int(maxDistanceFt):
+  state['vehicle_state']['distanceFromHome'] =  geodesic((state['drive_state']['latitude'],state['drive_state']['longitude']),tHome).ft
+  if int(state['vehicle_state']['distanceFromHome']) < int(tHomeRadiusFt):
     state['vehicle_state']['isHome'] = True
   else:
     state['vehicle_state']['isHome'] = False
-  if int(state['charge_state']['ideal_battery_range']) >= int(chargedRange)-10:
+  if int(state['charge_state']['ideal_battery_range']) >= int(tChargeRangeFull)-10:
     state['vehicle_state']['isCharged'] = True
   else:
     state['vehicle_state']['isCharged'] = False
-  if int(state['charge_state']['ideal_battery_range']) <= int(shouldChargeRange):
+  if int(state['charge_state']['ideal_battery_range']) <= int(tChargeRangeMedium):
     state['vehicle_state']['shouldCharge'] = True
   else:
     state['vehicle_state']['shouldCharge'] = False
-  if int(state['charge_state']['ideal_battery_range']) <= int(lowRange):
+  if int(state['charge_state']['ideal_battery_range']) <= int(tChargeRangeLow):
     state['vehicle_state']['isLow'] = True
   else:
     state['vehicle_state']['isLow'] = False
@@ -120,48 +119,37 @@ else:
 pdebug('lumen server: ' + lumen)
 pdebug('config server: ' + config)
 
-try:
-  home = open('/var/run/secrets/home', 'r').read().strip()
-  pdebug('note: home = ' + home)
-except:
-  home = configGET('GaussHome')
-  pdebug('from configGET: home = ' + home)
-  if home == "":
-    home = '37.4919392,-121.9469367'
-    pdebug('warning: home = ' + home)
+def getConfig(key, defaultVal):
+  try:
+    val = open('/var/run/config/' + key, 'r').read().strip()
+    pdebug('note: ' + key + ' = ' + val)
+    return val
+  except:
+    val = configGET(key)
+    pdebug('from configGET: ' + key + ' = ' + val)
+    if val == "":
+      val = defaultVal
+      pdebug('defaulted: ' + key + ' = ' + val)
+    return val
+
+tHome = getConfig('tHome','37.4919392,-121.9469367')
+tHomeRadiusFt = getConfig('tHomeRadiusFt','100')
+tWork = getConfig('tWork','37.4919392,-121.9469367')
+tWorkRadiusFt = getConfig('tWorkRadiusFt','1000')
+tEmailAdr = getConfig('tEmailAdr',"")
+tChargeRangeFull = getConfig('tChargeRangeFull','270')
+tChargeRangeMedium = getConfig('tChargeRangeMedium','100')
+tChargeRangeLow = getConfig('tChargeRangeLow','30')
 
 try:
-  username = open('/var/run/secrets/email', 'r').read().strip()
-  pdebug('note: username = ' + username)
+  tPassword = open('/var/run/secrets/tPassword', 'r').read().strip()
+  pdebug('note: tPassword = [redacted]')
 except:
-  username = configGET('GaussUserName')
-  pdebug('from configGet: username = ' + username)
-  if home == "":
-    pdebug('warning: username = None')
-    username = None
+  pdebug('warning: tPassword = None')
+  tPassword = None
 
-try:
-  password = open('/var/run/secrets/password', 'r').read().strip()
-  pdebug('note: password = [redacted]')
-except:
-  pdebug('warning: password = None')
-  password = None
+# Todo: soft check every 15 minutes if car is online, then get state. -- careful, this could keep the car online ?always?
 
-try:
-  minimumRange = open('/var/run/secrets/minrange', 'r').read().strip()
-  pdebug('note: minimumRange = ' + str(minimumRange))
-except:
-  minimumRange = configGET('homeMaxDistFt')
-  pdebug('from configGet: minimumRange = ' + str(minimumRange))
-  if minimumRange == "":
-    minimumRange = 100
-    pdebug('defaulting: minimumRange = ' + str(minimumRange))
-
-# Todo: soft check every 15 minutes if car is online, then get state.
-
-chargedRange = configGET('chargedRange')
-shouldChargeRange = configGET('shouldChargeRange')
-lowRange = configGET('lowRange')
 
 while True:
   if int(time.time()) - int(state['data_state']['timestamp'])  > getStateInterval:
@@ -174,8 +162,8 @@ while True:
         if state['vehicle_state']['isHome'] == True and state['charge_state']['charging_state'] != 'Disconnected':
           pdebug('Car is home and plugged in!')
           lumenPUT('{"animation":"fill","g":255}')
-        elif state['vehicle_state']['isHome'] == True and state['charge_state']['charging_state'] == 'Disconnected' and int(state['charge_state']['battery_range']) < int(minimumRange):
-          pdebug('car is home, not plugged in and below ' + minimumRange + ' miles range')
+        elif state['vehicle_state']['isHome'] == True and state['charge_state']['charging_state'] == 'Disconnected' and int(state['charge_state']['battery_range']) < int(tChargeRangeMedium):
+          pdebug('car is home, not plugged in and below ' + tChargeRangeMedium + ' miles range')
           lumenPUT('{"animation":"fill","r":255}')
         elif state['vehicle_state']['isHome'] == True and state['charge_state']['charging_state'] == 'Disconnected':
           pdebug('Warning car is home but not plugged in!')
@@ -195,7 +183,7 @@ while True:
         dataPUT = requests.put('https://'+config+':8443/badger/currentStateKey',currentStateKey,verify=False)
         pdebug("PUT currentStateKey response code: " + str(dataPUT.status_code))
       except:
-        pdebug("failed to PUT currentState and currentStateKey")
+        pdebug("failed to PUT currentState and/or currentStateKey")
     else:
       pdebug('login failed, sleeping for a while')
       for i in range(loginfailloop):
