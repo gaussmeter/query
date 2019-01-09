@@ -161,23 +161,15 @@ while True:
         pdebug('shift_state: ' + str(state['drive_state']['shift_state']) + ', speed: ' + str(state['drive_state']['speed']) + ', distance from home: ' + str(state['vehicle_state']['distanceFromHome']) + ', range: ' + str(state['charge_state']['battery_range']) )
         if state['vehicle_state']['isHome'] == True and state['charge_state']['charging_state'] != 'Disconnected':
           pdebug('Car is home and plugged in!')
-          #putDefault("eIHIP", "fill")
-          #putDefault("cIHIP", "(0,0,0,255)")
           lumenPUT('{"animation":"'+getConfig('eIHIP','fill')+'","rgbw":"'+getConfig('cIHIP','')+'"}')
         elif state['vehicle_state']['isHome'] == True and state['charge_state']['charging_state'] == 'Disconnected' and int(state['charge_state']['battery_range']) < int(tChargeRangeMedium):
           pdebug('car is home, not plugged in and below ' + tChargeRangeMedium + ' miles range')
-          #putDefault("eIHNPBCRM", "fill")
-          #putDefault("cIHNPBCRM", "(0,0,0,255)")
           lumenPUT('{"animation":"'+getConfig('eIHNPBCRM','fill')+'","rgbw":"'+getConfig('cIHNPBCRM','')+'"}')
         elif state['vehicle_state']['isHome'] == True and state['charge_state']['charging_state'] == 'Disconnected':
           pdebug('Warning car is home but not plugged in!')
-          #putDefault("eIHNP", "fill")
-          #putDefault("cIHNP", "(0,0,0,255)")
           lumenPUT('{"animation":"'+getConfig('eIHNP','fill')+'","rgbw":"'+getConfig('cIHNP','')+'"}')
         elif state['vehicle_state']['isHome'] == False:
           pdebug('Car is not at home')
-          #putDefault("eNH", "rainbow")
-          #putDefault("cNH", "(0,0,0,255)")
           lumenPUT('{"animation":"'+getConfig('eNH','rainbow')+'","rgbw":"'+getConfig('cNH','')+'"}')
         elif state['drive_state']['shift_state'] != None:
           getStateInterval = getStateIntervalActive
