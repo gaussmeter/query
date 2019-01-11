@@ -21,6 +21,8 @@ getStateIntervalOnline = 1200
 getStateIntervalOnline = getStateIntervalDefault
 loginfailloop = 90
 debugEnabled = True
+softStateInterval = 300
+lastSoftStateInterval = time.time()
 
 
 def signal_handler(sig, frame):
@@ -59,7 +61,9 @@ def getVehicle():
   pdebug('start getVehicle')
   try:
     connection = teslajson.Connection(tEmailAdr, tPassword, tesla_client='{"v1": {"id": "e4a9949fcfa04068f59abb5a658f2bac0a3428e4652315490b659d5ab3f35a9e", "secret": "c75f14bbadc8bee3a7594412c31416f8300256d7668ea7e6e7f06727bfb9d220", "baseurl": "https://owner-api.teslamotors.com", "api": "/api/1/"}}')
-    return connection.vehicles[0]
+    vehicle = connection.vehicles[0]
+    #pprint.pprint(vehicle, indent=2)
+    return vehicle
   except:
     return {'state' : 'failed'}
 
@@ -132,6 +136,46 @@ def getConfig(key, defaultVal):
       pdebug('defaulted: ' + key + ' = ' + val)
     return val
 
+def query(vehicle):
+  if vehicle['state'] != 'failed':
+    state = getState(vehicle)
+    if state['data_state']['isGood'] == True:
+      #pprint.pprint(state, indent=2)
+      pdebug('shift_state: ' + str(state['drive_state']['shift_state']) + ', speed: ' + str(state['drive_state']['speed']) + ', distance from home: ' + str(state['vehicle_state']['distanceFromHome']) + ', range: ' + str(state['charge_state']['battery_range']) )
+      if state['vehicle_state']['isHome'] == True and state['charge_state']['charging_state'] != 'Disconnected':
+        pdebug('Car is home and plugged in!')
+        lumenPUT('{"animation":"'+getConfig('eIHIP','fill')+'","rgbw":"'+getConfig('cIHIP','')+'"}')
+      elif state['vehicle_state']['isHome'] == True and state['charge_state']['charging_state'] == 'Disconnected' and int(state['charge_state']['battery_range']) < int(tChargeRangeMedium):
+        pdebug('car is home, not plugged in and below ' + tChargeRangeMedium + ' miles range')
+        lumenPUT('{"animation":"'+getConfig('eIHNPBCRM','fill')+'","rgbw":"'+getConfig('cIHNPBCRM','')+'"}')
+      elif state['vehicle_state']['isHome'] == True and state['charge_state']['charging_state'] == 'Disconnected':
+        pdebug('Warning car is home but not plugged in!')
+        lumenPUT('{"animation":"'+getConfig('eIHNP','fill')+'","rgbw":"'+getConfig('cIHNP','')+'"}')
+      elif state['vehicle_state']['isHome'] == False:
+        pdebug('Car is not at home')
+        lumenPUT('{"animation":"'+getConfig('eNH','rainbow')+'","rgbw":"'+getConfig('cNH','')+'"}')
+      elif state['drive_state']['shift_state'] != None:
+        getStateInterval = getStateIntervalActive
+        lumenPUT('{"animation":"rainbow"}')
+      else:
+        getStateInterval = getStateIntervalOnline
+    currentStateKey = datetime.datetime.now().isoformat()
+    try:
+      dataPUT = requests.put('https://'+config+':8443/badger/'+currentStateKey, data=json.dumps(state), verify=False)
+      pdebug("PUT currentState response code: " + str(dataPUT.status_code))
+      dataPUT = requests.put('https://'+config+':8443/badger/currentStateKey',currentStateKey,verify=False)
+      pdebug("PUT currentStateKey response code: " + str(dataPUT.status_code))
+    except:
+      pdebug("failed to PUT currentState and/or currentStateKey")
+  else:
+    pdebug('login failed, sleeping for a while')
+    for i in range(loginfailloop):
+      lumenPUT('{"animation":"fill","r":255}')
+      time.sleep(1)
+      lumenPUT('{"animation":"fill"}')
+      time.sleep(1)
+  return state
+
 tHome = getConfig('tHome','37.4919392,-121.9469367')
 tHomeRadiusFt = getConfig('tHomeRadiusFt','100')
 tWork = getConfig('tWork','37.4919392,-121.9469367')
@@ -150,46 +194,24 @@ except:
 
 # Todo: soft check every 15 minutes if car is online, then get state. -- careful, this could keep the car online ?always?
 
-
+queryNext = False
 while True:
-  if int(time.time()) - int(state['data_state']['timestamp'])  > getStateInterval:
+  if int(time.time()) - int(lastSoftStateInterval) > int(softStateInterval): #or int(time.time()) - int(state['data_state']['timestamp'])  > getStateInterval:
+    lastSoftStateInterval = time.time()
     vehicle = getVehicle()
-    if vehicle['state'] != 'failed':
-      state = getState(vehicle)
-      if state['data_state']['isGood'] == True:
-        #pprint.pprint(state, indent=2)
-        pdebug('shift_state: ' + str(state['drive_state']['shift_state']) + ', speed: ' + str(state['drive_state']['speed']) + ', distance from home: ' + str(state['vehicle_state']['distanceFromHome']) + ', range: ' + str(state['charge_state']['battery_range']) )
-        if state['vehicle_state']['isHome'] == True and state['charge_state']['charging_state'] != 'Disconnected':
-          pdebug('Car is home and plugged in!')
-          lumenPUT('{"animation":"'+getConfig('eIHIP','fill')+'","rgbw":"'+getConfig('cIHIP','')+'"}')
-        elif state['vehicle_state']['isHome'] == True and state['charge_state']['charging_state'] == 'Disconnected' and int(state['charge_state']['battery_range']) < int(tChargeRangeMedium):
-          pdebug('car is home, not plugged in and below ' + tChargeRangeMedium + ' miles range')
-          lumenPUT('{"animation":"'+getConfig('eIHNPBCRM','fill')+'","rgbw":"'+getConfig('cIHNPBCRM','')+'"}')
-        elif state['vehicle_state']['isHome'] == True and state['charge_state']['charging_state'] == 'Disconnected':
-          pdebug('Warning car is home but not plugged in!')
-          lumenPUT('{"animation":"'+getConfig('eIHNP','fill')+'","rgbw":"'+getConfig('cIHNP','')+'"}')
-        elif state['vehicle_state']['isHome'] == False:
-          pdebug('Car is not at home')
-          lumenPUT('{"animation":"'+getConfig('eNH','rainbow')+'","rgbw":"'+getConfig('cNH','')+'"}')
-        elif state['drive_state']['shift_state'] != None:
-          getStateInterval = getStateIntervalActive
-          lumenPUT('{"animation":"rainbow"}')
-        else:
-          getStateInterval = getStateIntervalOnline
-      currentStateKey = datetime.datetime.now().isoformat()
-      try:
-        dataPUT = requests.put('https://'+config+':8443/badger/'+currentStateKey, data=json.dumps(state), verify=False)
-        pdebug("PUT currentState response code: " + str(dataPUT.status_code))
-        dataPUT = requests.put('https://'+config+':8443/badger/currentStateKey',currentStateKey,verify=False)
-        pdebug("PUT currentStateKey response code: " + str(dataPUT.status_code))
-      except:
-        pdebug("failed to PUT currentState and/or currentStateKey")
+    pdebug('soft check state: ' + vehicle['state'])
+    if vehicle['state'] == 'online':
+      queryNext = True
     else:
-      pdebug('login failed, sleeping for a while')
-      for i in range(loginfailloop):
-        lumenPUT('{"animation":"fill","r":255}')
-        time.sleep(1)
-        lumenPUT('{"animation":"fill"}')
-        time.sleep(1)
-    pdebug('next check: ' + str(datetime.datetime.now() + datetime.timedelta(seconds=getStateInterval)) + ' (' + str(getStateInterval) + ')')
+      queryNext = False
+      pdebug('  next soft state check: ' + str(datetime.datetime.now() + datetime.timedelta(seconds=softStateInterval)) + ' (' + str(softStateInterval) + ')')
+  if int(time.time()) - int(state['data_state']['timestamp']) > getStateInterval:
+    vehicle = getVehicle()
+    queryNext = True
+  if queryNext == True:
+    state = query(vehicle)
+    queryNext = False
+    lastSoftStateInterval = time.time()
+    pdebug('next hard vehicle query: ' + str(datetime.datetime.now() + datetime.timedelta(seconds=getStateInterval)) + ' (' + str(getStateInterval) + ')')
+    pdebug('  next soft state check: ' + str(datetime.datetime.now() + datetime.timedelta(seconds=softStateInterval)) + ' (' + str(softStateInterval) + ')')
   time.sleep(.5)
