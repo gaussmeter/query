@@ -151,10 +151,7 @@ def query(vehicle):
         pdebug('Car is not at home')
         lumenPUT('{"animation":"'+getConfig('eNH','rainbow')+'","rgbw":"'+getConfig('cNH','')+'"}')
       elif state['drive_state']['shift_state'] != None:
-        getStateInterval = getStateIntervalActive
         lumenPUT('{"animation":"rainbow"}')
-      else:
-        getStateInterval = getStateIntervalOnline
     currentStateKey = datetime.datetime.now().isoformat()
     try:
       dataPUT = requests.put('https://'+config+':8443/badger/'+currentStateKey, data=json.dumps(state), verify=False)
@@ -214,6 +211,12 @@ while True:
     queryNext = True
   if queryNext == True:
     state = query(vehicle)
+    if state['drive_state']['shift_state'] != None:
+      getStateInterval = int(getConfig('tGetStateIntervalDriving','30'))
+    elif state['charge_state']['charge_rate'] > 0:
+      getStateInterval = int(getConfig('tGetStateIntervalCharging','60'))
+    else:
+      getStateInterval = int(getConfig('tGetStateInterval','3600'))
     queryNext = False
     lastSoftStateInterval = time.time()
     pdebug('next hard vehicle query: ' + str(datetime.datetime.now() + datetime.timedelta(seconds=getStateInterval)) + ' (' + str(getStateInterval) + ')')
