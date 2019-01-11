@@ -193,8 +193,6 @@ except:
   pdebug('warning: tPassword = None')
   tPassword = None
 
-# Todo: fix check interval when driving and when charging. ?30 seconds?
-
 queryNext = False
 firstSoftCheck = True
 while True:
