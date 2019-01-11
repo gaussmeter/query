@@ -192,7 +192,7 @@ except:
   pdebug('warning: tPassword = None')
   tPassword = None
 
-# Todo: soft check every 15 minutes if car is online, then get state. -- careful, this could keep the car online ?always?
+# Todo: check more often when driving and when charging. ?30 seconds?
 
 queryNext = False
 while True:
