@@ -107,8 +107,6 @@ def getState(vehicle):
   state['data_state']['isGood'] = True
   return state
 
-state = initializeState()
-
 if os.environ.get('LUMEN') != None:
   lumen = os.environ.get('LUMEN')
 else:
@@ -184,6 +182,12 @@ tChargeRangeMedium = getConfig('tChargeRangeMedium','100')
 tChargeRangeLow = getConfig('tChargeRangeLow','30')
 getStateInterval = int(getConfig('tGetStateInterval','3600'))
 softStateInterval = int(getConfig('tSoftStateInterval','300'))
+
+try:
+  state = json.loads(getConfig(getConfig('currentStateKey',''),''))
+  pdebug('state recovered... ')
+except:
+  state = initializeState()
 
 try:
   tPassword = open('/var/run/secrets/tPassword', 'r').read().strip()
