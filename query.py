@@ -196,8 +196,10 @@ except:
 # Todo: fix check interval when driving and when charging. ?30 seconds?
 
 queryNext = False
+firstSoftCheck = True
 while True:
-  if int(time.time()) - int(lastSoftStateInterval) > int(softStateInterval):
+  if int(time.time()) - int(lastSoftStateInterval) > int(softStateInterval) or firstSoftCheck == True:
+    firstSoftCheck = False
     lastSoftStateInterval = time.time()
     vehicle = getVehicle()
     pdebug('soft check state: ' + vehicle['state'])
