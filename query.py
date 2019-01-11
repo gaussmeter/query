@@ -137,7 +137,7 @@ def query(vehicle):
     state = getState(vehicle)
     if state['data_state']['isGood'] == True:
       #pprint.pprint(state, indent=2)
-      pdebug('shift_state: ' + str(state['drive_state']['shift_state']) + ', speed: ' + str(state['drive_state']['speed']) + ', distance from home: ' + str(state['vehicle_state']['distanceFromHome']) + ', range: ' + str(state['charge_state']['battery_range']) )
+      pdebug('shift_state: ' + str(state['drive_state']['shift_state']) + ', speed: ' + str(state['drive_state']['speed']) + ', distance from home: ' + str(state['vehicle_state']['distanceFromHome']) + ', range: ' + str(state['charge_state']['battery_range']) + ', charge rate: ' + str(state['charge_state']['charge_rate']))
       if state['vehicle_state']['isHome'] == True and state['charge_state']['charging_state'] != 'Disconnected':
         pdebug('Car is home and plugged in!')
         lumenPUT('{"animation":"'+getConfig('eIHIP','fill')+'","rgbw":"'+getConfig('cIHIP','')+'"}')
