@@ -196,7 +196,7 @@ except:
 
 queryNext = False
 while True:
-  if int(time.time()) - int(lastSoftStateInterval) > int(softStateInterval): #or int(time.time()) - int(state['data_state']['timestamp'])  > getStateInterval:
+  if int(time.time()) - int(lastSoftStateInterval) > int(softStateInterval):
     lastSoftStateInterval = time.time()
     vehicle = getVehicle()
     pdebug('soft check state: ' + vehicle['state'])
