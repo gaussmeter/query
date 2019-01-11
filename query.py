@@ -14,14 +14,12 @@ from geopy.distance import geodesic
 urllib3.disable_warnings()
 
 getStateIntervalDefault = 3600
-getStateInterval = getStateIntervalDefault
-getStateIntervalActive = 5 
+getStateIntervalActive = 5
 getStateIntervalOnline = 900 
 getStateIntervalOnline = 1200 
 getStateIntervalOnline = getStateIntervalDefault
 loginfailloop = 90
 debugEnabled = True
-softStateInterval = 300
 lastSoftStateInterval = time.time()
 
 
@@ -184,6 +182,8 @@ tEmailAdr = getConfig('tEmailAdr',"")
 tChargeRangeFull = getConfig('tChargeRangeFull','270')
 tChargeRangeMedium = getConfig('tChargeRangeMedium','100')
 tChargeRangeLow = getConfig('tChargeRangeLow','30')
+getStateInterval = int(getConfig('tGetStateInterval','3600'))
+softStateInterval = int(getConfig('tSoftStateInterval','300'))
 
 try:
   tPassword = open('/var/run/secrets/tPassword', 'r').read().strip()
