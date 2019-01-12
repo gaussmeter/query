@@ -193,10 +193,14 @@ except:
   pdebug('warning: tPassword = None')
   tPassword = None
 
+  #Todo: keep check interval short for 1 full cycle before going back to default.
+  #Todo: current (5 minute) default for soft check may be too short.. ?10 mintes? -- many be dynamic depending on battery %.
+
 queryNext = False
 firstSoftCheck = True
 while True:
   if int(time.time()) - int(lastSoftStateInterval) > int(softStateInterval) or firstSoftCheck == True:
+    softStateInterval = int(getConfig('tSoftStateInterval','300'))
     firstSoftCheck = False
     lastSoftStateInterval = time.time()
     vehicle = getVehicle()
