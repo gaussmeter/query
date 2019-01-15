@@ -140,18 +140,18 @@ def query(vehicle):
       rangePercent = int(state['charge_state']['battery_range']) / int(tChargeRangeFull) * 100
       if state['vehicle_state']['isHome'] == True and state['charge_state']['charging_state'] != 'Disconnected':
         pdebug('Car is home and plugged in!')
-        lumenPUT('{"animation":"'+getConfig('eIHIP','fill')+'","rgbw":"'+getConfig('cIHIP','')+'","percent":'+rangePercent+'}')
+        lumenPUT('{"animation":"'+getConfig('eIHIP','fill')+'","rgbw":"'+getConfig('cIHIP','')+'","percent":'+str(rangePercent)+'}')
       elif state['vehicle_state']['isHome'] == True and state['charge_state']['charging_state'] == 'Disconnected' and int(state['charge_state']['battery_range']) < int(tChargeRangeMedium):
         pdebug('car is home, not plugged in and below ' + tChargeRangeMedium + ' miles range')
-        lumenPUT('{"animation":"'+getConfig('eIHNPBCRM','fill')+'","rgbw":"'+getConfig('cIHNPBCRM','')+'","percent":'+rangePercent+'}')
+        lumenPUT('{"animation":"'+getConfig('eIHNPBCRM','fill')+'","rgbw":"'+getConfig('cIHNPBCRM','')+'","percent":'+str(rangePercent)+'}')
       elif state['vehicle_state']['isHome'] == True and state['charge_state']['charging_state'] == 'Disconnected':
         pdebug('Warning car is home but not plugged in!')
-        lumenPUT('{"animation":"'+getConfig('eIHNP','fill')+'","rgbw":"'+getConfig('cIHNP','')+'","percent":'+rangePercent+'}')
+        lumenPUT('{"animation":"'+getConfig('eIHNP','fill')+'","rgbw":"'+getConfig('cIHNP','')+'","percent":'+str(rangePercent)+'}')
       elif state['vehicle_state']['isHome'] == False:
         pdebug('Car is not at home')
-        lumenPUT('{"animation":"'+getConfig('eNH','rainbow')+'","rgbw":"'+getConfig('cNH','')+'","percent":'+rangePercent+'}')
+        lumenPUT('{"animation":"'+getConfig('eNH','rainbow')+'","rgbw":"'+getConfig('cNH','')+'","percent":'+str(rangePercent)+'}')
       elif state['drive_state']['shift_state'] != None:
-        lumenPUT('{"animation":"rainbow","percent":'+rangePercent+'}')
+        lumenPUT('{"animation":"rainbow","percent":'+str(rangePercent)+'}')
     currentStateKey = datetime.datetime.now().isoformat()
     try:
       dataPUT = requests.put('https://'+config+':8443/badger/'+currentStateKey, data=json.dumps(state), verify=False)
