@@ -22,7 +22,6 @@ loginfailloop = 90
 debugEnabled = True
 lastSoftStateInterval = time.time()
 
-
 def signal_handler(sig, frame):
   pdebug('You pressed Ctrl+C!')
   sys.exit(0)
@@ -55,11 +54,11 @@ def configGET(key):
     return ""
 
 
-def getVehicle():
+def getVehicle(vehicle):
   pdebug('start getVehicle')
   try:
     connection = teslajson.Connection(tEmailAdr, tPassword, tesla_client='{"v1": {"id": "e4a9949fcfa04068f59abb5a658f2bac0a3428e4652315490b659d5ab3f35a9e", "secret": "c75f14bbadc8bee3a7594412c31416f8300256d7668ea7e6e7f06727bfb9d220", "baseurl": "https://owner-api.teslamotors.com", "api": "/api/1/"}}')
-    vehicle = connection.vehicles[0]
+    vehicle = connection.vehicles[vehicle]
     #pprint.pprint(vehicle, indent=2)
     return vehicle
   except:
@@ -177,6 +176,7 @@ tEmailAdr = getConfig('tEmailAdr',"")
 tChargeRangeFull = getConfig('tChargeRangeFull','270')
 tChargeRangeMedium = getConfig('tChargeRangeMedium','100')
 tChargeRangeLow = getConfig('tChargeRangeLow','30')
+tVehicle = int(getConfig('tVehicle','0'))
 getStateInterval = int(getConfig('tGetStateInterval','3600'))
 softStateInterval = int(getConfig('tSoftStateInterval','300'))
 
@@ -203,7 +203,7 @@ while True:
     softStateInterval = int(getConfig('tSoftStateInterval','300'))
     firstSoftCheck = False
     lastSoftStateInterval = time.time()
-    vehicle = getVehicle()
+    vehicle = getVehicle(tVehicle)
     pdebug('soft check state: ' + vehicle['state'])
     if vehicle['state'] == 'online':
       queryNext = True
@@ -211,7 +211,7 @@ while True:
       queryNext = False
       pdebug('  next soft state check: ' + str(datetime.datetime.now() + datetime.timedelta(seconds=softStateInterval)) + ' (' + str(softStateInterval) + ')')
   if int(time.time()) - int(state['data_state']['timestamp']) > getStateInterval:
-    vehicle = getVehicle()
+    vehicle = getVehicle(tVehicle)
     queryNext = True
   if queryNext == True:
     state = query(vehicle)
