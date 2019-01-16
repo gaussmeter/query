@@ -206,10 +206,8 @@ except:
   #Todo: current (5 minute) default for soft check may be too short.. ?10 mintes? -- many be dynamic depending on battery %.
 
 queryNext = False
-firstSoftCheck = True
 while True:
-  if int(time.time()) - int(lastSoftStateInterval) > int(softStateInterval) or firstSoftCheck == True:
-    firstSoftCheck = False
+  if int(time.time()) - int(lastSoftStateInterval) > int(softStateInterval):
     softStateInterval = int(getConfig('tSoftStateInterval','300'))
     lastSoftStateInterval = time.time()
     try:
