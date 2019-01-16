@@ -11,6 +11,9 @@ import urllib3
 import os
 from geopy.distance import geodesic
 
+#ToDo: research python method to execute function on failure just before exit...
+# -- call lumen with "alarm" animation.
+
 urllib3.disable_warnings()
 
 getStateIntervalDefault = 3600
@@ -20,7 +23,6 @@ getStateIntervalOnline = 1200
 getStateIntervalOnline = getStateIntervalDefault
 loginfailloop = 90
 debugEnabled = True
-lastSoftStateInterval = time.time()
 
 def signal_handler(sig, frame):
   pdebug('You pressed Ctrl+C!')
@@ -180,6 +182,12 @@ tChargeRangeLow = getConfig('tChargeRangeLow','30')
 tVehicle = int(getConfig('tVehicle','0'))
 getStateInterval = int(getConfig('tGetStateInterval','3600'))
 softStateInterval = int(getConfig('tSoftStateInterval','300'))
+lastSoftStateInterval = float(getConfig('lastSoftStateInterval','0'))
+if lastSoftStateInterval == 0:
+  lastSoftStateInterval = time.time()
+  pdebug('lastSoftStateInterval set to now:' + str(lastSoftStateInterval))
+else:
+  pdebug('lastSoftStateInterval restore from badger:'+str(lastSoftStateInterval))
 
 try:
   state = json.loads(getConfig(getConfig('currentStateKey',''),''))
@@ -201,9 +209,14 @@ queryNext = False
 firstSoftCheck = True
 while True:
   if int(time.time()) - int(lastSoftStateInterval) > int(softStateInterval) or firstSoftCheck == True:
-    softStateInterval = int(getConfig('tSoftStateInterval','300'))
     firstSoftCheck = False
+    softStateInterval = int(getConfig('tSoftStateInterval','300'))
     lastSoftStateInterval = time.time()
+    try:
+      dataPUT = requests.put('https://'+config+':8443/badger/lastSoftStateInterval',str(time.time()),verify=False)
+      pdebug("PUT lastSoftStateInterval response code: " + str(dataPUT.status_code))
+    except:
+      pdebug('failed to store lastSoftStateInterval')
     vehicle = getVehicle(tVehicle)
     pdebug('soft check state: ' + vehicle['state'])
     if vehicle['state'] == 'online':
