@@ -154,7 +154,7 @@ def query(vehicle):
         lumenPUT('{"animation":"'+getConfig('eNH','rainbow')+'","rgbw":"'+getConfig('cNH','')+'","percent":'+str(rangePercent)+'}')
       elif state['drive_state']['shift_state'] != None:
         lumenPUT('{"animation":"rainbow","percent":'+str(rangePercent)+'}')
-    currentStateKey = datetime.datetime.now().isoformat()
+    currentStateKey = 'ts_'+str(int(time.time()))
     try:
       dataPUT = requests.put('https://'+config+':8443/badger/'+currentStateKey, data=json.dumps(state), verify=False)
       pdebug("PUT currentState response code: " + str(dataPUT.status_code))
