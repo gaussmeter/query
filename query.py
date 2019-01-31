@@ -88,30 +88,30 @@ def getState(vehicle):
     state['climate_state'] = vehicle.data_request('climate_state')
     state['drive_state'] = vehicle.data_request('drive_state')
     state['gui_settings'] = vehicle.data_request('gui_settings')
-    state['ts_vehicle_state'] = vehicle.data_request('vehicle_state')
+    state['vehicle_state'] = vehicle.data_request('vehicle_state')
     state['vehicle_config'] = vehicle.data_request('vehicle_config')
     #state['mobile_enabled'] = vehicle.data_request('mobile_enabled')
     #state['nearby_charging_sites'] = vehicle.data_request('nearby_charging_sites')
   except:
     return state
-  state['vehicle_state'] = {}
-  state['vehicle_state']['distanceFromHome'] =  geodesic((state['drive_state']['latitude'],state['drive_state']['longitude']),tHome).ft
-  if int(state['vehicle_state']['distanceFromHome']) < int(tHomeRadiusFt):
-    state['vehicle_state']['isHome'] = True
+  state['state'] = {}
+  state['state']['distanceFromHome'] =  geodesic((state['drive_state']['latitude'],state['drive_state']['longitude']),tHome).ft
+  if int(state['state']['distanceFromHome']) < int(tHomeRadiusFt):
+    state['state']['isHome'] = True
   else:
-    state['vehicle_state']['isHome'] = False
+    state['state']['isHome'] = False
   if int(state['charge_state']['ideal_battery_range']) >= int(tChargeRangeFull)-10:
-    state['vehicle_state']['isCharged'] = True
+    state['state']['isCharged'] = True
   else:
-    state['vehicle_state']['isCharged'] = False
+    state['state']['isCharged'] = False
   if int(state['charge_state']['ideal_battery_range']) <= int(tChargeRangeMedium):
-    state['vehicle_state']['shouldCharge'] = True
+    state['state']['shouldCharge'] = True
   else:
-    state['vehicle_state']['shouldCharge'] = False
+    state['state']['shouldCharge'] = False
   if int(state['charge_state']['ideal_battery_range']) <= int(tChargeRangeLow):
-    state['vehicle_state']['isLow'] = True
+    state['state']['isLow'] = True
   else:
-    state['vehicle_state']['isLow'] = False
+    state['state']['isLow'] = False
   state['data_state']['timestamp'] = int(time.time())
   state['data_state']['isGood'] = True
   return state
@@ -146,18 +146,18 @@ def query(vehicle):
     state = getState(vehicle)
     if state['data_state']['isGood'] == True:
       #pprint.pprint(state, indent=2)
-      pdebug('shift_state: ' + str(state['drive_state']['shift_state']) + ', speed: ' + str(state['drive_state']['speed']) + ', distance from home: ' + str(state['vehicle_state']['distanceFromHome']) + ', range: ' + str(state['charge_state']['battery_range']) + ', charge rate: ' + str(state['charge_state']['charge_rate']))
+      pdebug('shift_state: ' + str(state['drive_state']['shift_state']) + ', speed: ' + str(state['drive_state']['speed']) + ', distance from home: ' + str(state['state']['distanceFromHome']) + ', range: ' + str(state['charge_state']['battery_range']) + ', charge rate: ' + str(state['charge_state']['charge_rate']))
       rangePercent = int(state['charge_state']['battery_range']) / int(tChargeRangeFull) * 100
-      if state['vehicle_state']['isHome'] == True and state['charge_state']['charging_state'] != 'Disconnected':
+      if state['state']['isHome'] == True and state['charge_state']['charging_state'] != 'Disconnected':
         pdebug('Car is home and plugged in!')
         lumenPUT('{"animation":"'+getConfig('eIHIP','fill')+'","rgbw":"'+getConfig('cIHIP','')+'","percent":'+str(rangePercent)+'}')
-      elif state['vehicle_state']['isHome'] == True and state['charge_state']['charging_state'] == 'Disconnected' and int(state['charge_state']['battery_range']) < int(tChargeRangeMedium):
+      elif state['state']['isHome'] == True and state['charge_state']['charging_state'] == 'Disconnected' and int(state['charge_state']['battery_range']) < int(tChargeRangeMedium):
         pdebug('car is home, not plugged in and below ' + tChargeRangeMedium + ' miles range')
         lumenPUT('{"animation":"'+getConfig('eIHNPBCRM','fill')+'","rgbw":"'+getConfig('cIHNPBCRM','')+'","percent":'+str(rangePercent)+'}')
-      elif state['vehicle_state']['isHome'] == True and state['charge_state']['charging_state'] == 'Disconnected':
+      elif state['state']['isHome'] == True and state['charge_state']['charging_state'] == 'Disconnected':
         pdebug('Warning car is home but not plugged in!')
         lumenPUT('{"animation":"'+getConfig('eIHNP','fill')+'","rgbw":"'+getConfig('cIHNP','')+'","percent":'+str(rangePercent)+'}')
-      elif state['vehicle_state']['isHome'] == False:
+      elif state['state']['isHome'] == False:
         pdebug('Car is not at home')
         lumenPUT('{"animation":"'+getConfig('eNH','rainbow')+'","rgbw":"'+getConfig('cNH','')+'","percent":'+str(rangePercent)+'}')
       elif state['drive_state']['shift_state'] != None:
