@@ -14,6 +14,8 @@ from geopy.distance import geodesic
 #ToDo: research python method to execute function on failure just before exit...
 # -- call lumen with "alarm" animation.
 
+#ToDo: send animation to lumen on soft state interval.
+
 urllib3.disable_warnings()
 
 getStateIntervalDefault = 3600
@@ -68,22 +70,28 @@ def getVehicle(vehicle):
 
 def getState(vehicle):
   pdebug('start getState')
-  state = initializeState() 
+  state = initializeState()
   vehicleState = vehicle['state']
   while True:
     pdebug(vehicleState)
     if vehicleState != 'online':
       time.sleep(5)
-      try: 
+      try:
         vehicleState = vehicle.wake_up()['response']['state']
       except:
         return state
-    else: 
+    else:
       break
   try:
-    state['drive_state'] = vehicle.data_request('drive_state')
-    state['climate_state'] = vehicle.data_request('climate_state')
+    state['vehicle'] = vehicle
     state['charge_state'] = vehicle.data_request('charge_state')
+    state['climate_state'] = vehicle.data_request('climate_state')
+    state['drive_state'] = vehicle.data_request('drive_state')
+    state['gui_settings'] = vehicle.data_request('gui_settings')
+    state['ts_vehicle_state'] = vehicle.data_request('vehicle_state')
+    state['vehicle_config'] = vehicle.data_request('vehicle_config')
+    #state['mobile_enabled'] = vehicle.data_request('mobile_enabled')
+    #state['nearby_charging_sites'] = vehicle.data_request('nearby_charging_sites')
   except:
     return state
   state['vehicle_state'] = {}
