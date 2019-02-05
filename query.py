@@ -191,7 +191,6 @@ tVehicle = int(getConfig('tVehicle','0'))
 getStateInterval = int(getConfig('tGetStateInterval','3600'))
 softStateInterval = int(getConfig('tSoftStateInterval','300'))
 lastSoftStateInterval = float(getConfig('lastSoftStateInterval','0'))
-lastStateNotOnline = False
 if lastSoftStateInterval == 0:
   lastSoftStateInterval = time.time()
   pdebug('lastSoftStateInterval set to now:' + str(lastSoftStateInterval))
@@ -228,10 +227,8 @@ while True:
     pdebug('soft check state: ' + vehicle['state'])
     if vehicle['state'] == 'online':
       queryNext = True
-      lastSoftStateInterval = False
     else:
       queryNext = False
-      lastSoftStateInterval = True
       pdebug('  next soft state check: ' + str(datetime.datetime.now() + datetime.timedelta(seconds=softStateInterval)) + ' (' + str(softStateInterval) + ')')
   if int(time.time()) - int(state['data_state']['timestamp']) > getStateInterval:
     vehicle = getVehicle(tVehicle)
@@ -244,9 +241,6 @@ while True:
       getStateInterval = int(getConfig('tGetStateIntervalCharging','60'))
     else:
       getStateInterval = int(getConfig('tGetStateInterval','3600'))
-    if lastStateNotOnline == True:
-      pdebug('last state != online, setting softStateInterval to 1/3rd ')
-      softStateInterval = softStateInterval/3
     queryNext = False
     lastSoftStateInterval = time.time()
     pdebug('next hard vehicle query: ' + str(datetime.datetime.now() + datetime.timedelta(seconds=getStateInterval)) + ' (' + str(getStateInterval) + ')')
