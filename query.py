@@ -52,7 +52,7 @@ def lumenPUT(data):
 
 def configGET(key):
   try:
-    response = requests.get('https://'+config+':8443/badger/'+key, verify=False)
+    response = requests.get('http://'+config+':8443/badger/'+key, verify=False)
     return response.text
   except:
     return ""
@@ -164,9 +164,9 @@ def query(vehicle):
         lumenPUT('{"animation":"rainbow","percent":'+str(rangePercent)+'}')
     currentStateKey = 'ts_'+str(int(time.time()))
     try:
-      dataPUT = requests.put('https://'+config+':8443/badger/'+currentStateKey, data=json.dumps(state), verify=False)
+      dataPUT = requests.put('http://'+config+':8443/badger/'+currentStateKey, data=json.dumps(state), verify=False)
       pdebug("PUT currentState response code: " + str(dataPUT.status_code))
-      dataPUT = requests.put('https://'+config+':8443/badger/currentStateKey',currentStateKey,verify=False)
+      dataPUT = requests.put('http://'+config+':8443/badger/currentStateKey',currentStateKey,verify=False)
       pdebug("PUT currentStateKey response code: " + str(dataPUT.status_code))
     except:
       pdebug("failed to PUT currentState and/or currentStateKey")
@@ -219,7 +219,7 @@ while True:
     softStateInterval = int(getConfig('tSoftStateInterval','300'))
     lastSoftStateInterval = time.time()
     try:
-      dataPUT = requests.put('https://'+config+':8443/badger/lastSoftStateInterval',str(time.time()),verify=False)
+      dataPUT = requests.put('http://'+config+':8443/badger/lastSoftStateInterval',str(time.time()),verify=False)
       pdebug("PUT lastSoftStateInterval response code: " + str(dataPUT.status_code))
     except:
       pdebug('failed to store lastSoftStateInterval')
