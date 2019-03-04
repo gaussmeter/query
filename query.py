@@ -61,7 +61,7 @@ def configGET(key):
 def getVehicle(vehicle):
   pdebug('start getVehicle')
   try:
-    connection = teslajson.Connection(tEmailAdr, tPassword, tesla_client='{"v1": {"id": "e4a9949fcfa04068f59abb5a658f2bac0a3428e4652315490b659d5ab3f35a9e", "secret": "c75f14bbadc8bee3a7594412c31416f8300256d7668ea7e6e7f06727bfb9d220", "baseurl": "https://owner-api.teslamotors.com", "api": "/api/1/"}}')
+    connection = teslajson.Connection(access_token=access_token, tesla_client='{"v1": {"id": "e4a9949fcfa04068f59abb5a658f2bac0a3428e4652315490b659d5ab3f35a9e", "secret": "c75f14bbadc8bee3a7594412c31416f8300256d7668ea7e6e7f06727bfb9d220", "baseurl": "https://owner-api.teslamotors.com", "api": "/api/1/"}}')
     vehicle = connection.vehicles[vehicle]
     #pprint.pprint(vehicle, indent=2)
     return vehicle
@@ -184,6 +184,8 @@ tHomeRadiusFt = getConfig('tHomeRadiusFt','100')
 tWork = getConfig('tWork','37.4919392,-121.9469367')
 tWorkRadiusFt = getConfig('tWorkRadiusFt','1000')
 tEmailAdr = getConfig('tEmailAdr',"")
+tToken = getConfig('tToken',"")
+access_token = json.loads(tToken)['access_token']
 tChargeRangeFull = getConfig('tChargeRangeFull','270')
 tChargeRangeMedium = getConfig('tChargeRangeMedium','100')
 tChargeRangeLow = getConfig('tChargeRangeLow','30')
