@@ -57,6 +57,13 @@ def configGET(key):
   except:
     return ""
 
+def secretGET(key):
+  try:
+    response = requests.get('http://'+config+':8443/secret/'+key, verify=False)
+    return response.text
+  except:
+    return ""
+
 
 def getVehicle(vehicle):
   pdebug('start getVehicle')
@@ -184,7 +191,7 @@ tHomeRadiusFt = getConfig('tHomeRadiusFt','100')
 tWork = getConfig('tWork','37.4919392,-121.9469367')
 tWorkRadiusFt = getConfig('tWorkRadiusFt','1000')
 tEmailAdr = getConfig('tEmailAdr',"")
-tToken = getConfig('tToken',"")
+tToken = secretGET('tToken')
 access_token = json.loads(tToken)['access_token']
 tChargeRangeFull = getConfig('tChargeRangeFull','270')
 tChargeRangeMedium = getConfig('tChargeRangeMedium','100')
