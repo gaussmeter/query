@@ -60,8 +60,10 @@ def configGET(key):
 def secretGET(key):
   try:
     response = requests.get('http://'+config+':8443/secret/'+key, verify=False)
+    pdebug('/secret/'+key+' retrieved.')
     return response.text
   except:
+    pdebug('/secret/'+key+' failed.')
     return ""
 
 
