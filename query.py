@@ -175,6 +175,31 @@ def query(vehicle):
         lumenPUT('{"animation":"rainbow","percent":'+str(rangePercent)+'}')
     currentStateKey = 'ts_'+str(int(time.time()))
     try:
+      #   ['data_state']['isGood']
+      #  ['drive_state']['speed']
+      #        ['state']['distanceFromHome']
+      #['climate_state']['outside_temp']
+      # ['charge_state']['battery_range']
+      # ['charge_state']['charge_rate']
+      # ['charge_state']['battery_level']
+      graphState = {}
+      graphState['data_state'] = {}
+      graphState['data_state']['isGood'] = state['data_state']['isGood']
+      graphState['drive_state'] = {}
+      graphState['drive_state']['speed'] = state['drive_state']['speed']
+      graphState['state'] = {}
+      graphState['state']['distanceFromHome'] = state['state']['distanceFromHome']
+      graphState['climate_state'] = {}
+      graphState['climate_state']['outside_temp'] = state['climate_state']['outside_temp']
+      graphState['charge_state'] = {}
+      graphState['charge_state']['battery_range'] = state['charge_state']['battery_range']
+      graphState['charge_state']['charge_rate'] = state['charge_state']['charge_rate']
+      graphState['charge_state']['battery_level'] = state['charge_state']['battery_level']
+      graphPUT = requests.put('http://'+config+':8443/badger/tsg_'+str(int(time.time())), data=json.dumps(graphState), verify=False)
+      pdebug("PUT graphState response code: " + str(graphPUT.status_code))
+    except:
+      pdebug("failed to PUT graph optimized state ")
+    try:
       dataPUT = requests.put('http://'+config+':8443/badger/'+currentStateKey, data=json.dumps(state), verify=False)
       pdebug("PUT currentState response code: " + str(dataPUT.status_code))
       dataPUT = requests.put('http://'+config+':8443/badger/currentStateKey',currentStateKey,verify=False)
