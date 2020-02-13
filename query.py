@@ -170,9 +170,13 @@ def query(vehicle):
         lumenPUT('{"animation":"'+getConfig('eIHNP','fill')+'","rgbw":"'+getConfig('cIHNP','')+'","percent":'+str(rangePercent)+'}')
       elif state['state']['isHome'] == False:
         pdebug('Car is not at home')
-        lumenPUT('{"animation":"'+getConfig('eNH','rainbow')+'","rgbw":"'+getConfig('cNH','')+'","percent":'+str(rangePercent)+'}')
+        lumenPUT('{"animation":"'+getConfig('eNH','rainbow')+'","rgbw":"'+getConfig('cNH','')+'","percent":'+str(rangePercent)+',"velocity":1}')
       elif state['drive_state']['shift_state'] != None:
-        lumenPUT('{"animation":"rainbow","percent":'+str(rangePercent)+'}')
+        if str(state['drive_state']['speed']) == "0" or state['drive_state']['speed'] == None:
+          velocity = "1"
+        else:
+          velocity = str(state['drive_state']['speed'])
+        lumenPUT('{"animation":"rainbow","percent":'+str(rangePercent)+',"velocity":'+velocity+'}')
     currentStateKey = 'ts_'+str(int(time.time()))
     try:
       #   ['data_state']['isGood']
