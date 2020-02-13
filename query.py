@@ -46,7 +46,7 @@ def initializeState():
 def lumenPUT(data):
   try:
     lumenPUT = requests.put('http://'+lumen+':9000/lumen', data=data)
-    pdebug('response code: ' + str(lumenPUT.status_code) + ', response json: ' + lumenPUT.text )
+    pdebug('response code: ' + str(lumenPUT.status_code) + ', response json: ' + lumenPUT.text + ', data: ' + data)
   except:
     pdebug("failed to PUT animation to lumen")
 
