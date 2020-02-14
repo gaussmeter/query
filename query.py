@@ -159,6 +159,10 @@ def query(vehicle):
       #pprint.pprint(state, indent=2)
       pdebug('shift_state: ' + str(state['drive_state']['shift_state']) + ', speed: ' + str(state['drive_state']['speed']) + ', distance from home: ' + str(state['state']['distanceFromHome']) + ', range: ' + str(state['charge_state']['battery_range']) + ', charge rate: ' + str(state['charge_state']['charge_rate']))
       rangePercent = int(state['charge_state']['battery_range']) / int(tChargeRangeFull) * 100
+      if str(state['drive_state']['speed']) == "0" or state['drive_state']['speed'] == None:
+        velocity = "1"
+      else:
+        velocity = str(state['drive_state']['speed'])
       if state['state']['isHome'] == True and state['charge_state']['charging_state'] != 'Disconnected':
         pdebug('Car is home and plugged in!')
         lumenPUT('{"animation":"'+getConfig('eIHIP','fill')+'","rgbw":"'+getConfig('cIHIP','')+'","percent":'+str(rangePercent)+'}')
@@ -170,12 +174,8 @@ def query(vehicle):
         lumenPUT('{"animation":"'+getConfig('eIHNP','fill')+'","rgbw":"'+getConfig('cIHNP','')+'","percent":'+str(rangePercent)+'}')
       elif state['state']['isHome'] == False:
         pdebug('Car is not at home')
-        lumenPUT('{"animation":"'+getConfig('eNH','rainbow')+'","rgbw":"'+getConfig('cNH','')+'","percent":'+str(rangePercent)+',"velocity":1}')
+        lumenPUT('{"animation":"'+getConfig('eNH','rainbow')+'","rgbw":"'+getConfig('cNH','')+'","percent":'+str(rangePercent)+',"velocity":'+velocity+'}')
       elif state['drive_state']['shift_state'] != None:
-        if str(state['drive_state']['speed']) == "0" or state['drive_state']['speed'] == None:
-          velocity = "1"
-        else:
-          velocity = str(state['drive_state']['speed'])
         lumenPUT('{"animation":"rainbow","percent":'+str(rangePercent)+',"velocity":'+velocity+'}')
     currentStateKey = 'ts_'+str(int(time.time()))
     try:
